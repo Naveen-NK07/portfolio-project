@@ -3,12 +3,16 @@ import axios from "axios";
 import "./App.css";
 
 export default function ReviewPage() {
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const [form, setForm] = useState({ name: "", email: "", message: "", rating: 5 });
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/reviews").then(res => setReviews(res.data));
-  }, []);
+    axios.get(`${API_URL}/api/reviews`)
+      .then(res => setReviews(res.data))
+      .catch(err => console.log("Error loading reviews:", err));
+  }, [API_URL]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,10 +20,14 @@ export default function ReviewPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post("http://localhost:5000/api/review", form);
+
+    await axios.post(`${API_URL}/api/review`, form);
+
     alert("Review submitted!");
-    const res = await axios.get("http://localhost:5000/api/reviews");
+
+    const res = await axios.get(`${API_URL}/api/reviews`);
     setReviews(res.data);
+
     setForm({ name: "", email: "", message: "", rating: 5 });
   };
 
