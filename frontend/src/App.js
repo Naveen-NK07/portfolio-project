@@ -11,13 +11,15 @@ function Home() {
   const [certificates, setCertificates] = useState([]);
 
   useEffect(() => {
+    const BASE_URL = "https://portfolio-project-2o22.onrender.com";
+
     // PERSONAL INFO
-    fetch("http://localhost:5000/api/personal-info")
+    fetch(`${BASE_URL}/api/personal-info`)
       .then(res => res.json())
       .then(data => setPersonal(data));
 
     // EDUCATION
-    fetch("http://localhost:5000/api/education")
+    fetch(`${BASE_URL}/api/education`)
       .then(res => res.json())
       .then(data => {
         const formatted = data.map(e =>
@@ -27,7 +29,7 @@ function Home() {
       });
 
     // SKILLS
-    fetch("http://localhost:5000/api/skills")
+    fetch(`${BASE_URL}/api/skills`)
       .then(res => res.json())
       .then(data => {
         const formatted = data.map(s => `${s.skill_name} (${s.proficiency})`);
@@ -35,7 +37,7 @@ function Home() {
       });
 
     // CERTIFICATES
-    fetch("http://localhost:5000/api/certificates")
+    fetch(`${BASE_URL}/api/certificates`)
       .then(res => res.json())
       .then(data => {
         const formatted = data.map(c =>
@@ -53,9 +55,10 @@ function Home() {
 
         <h2>{personal.full_name}</h2>
         <p>{personal.headline}</p>
-        <p>Email:{" "}
-              <a href={`mailto:${personal.email}`}>{personal.email}</a>
-            </p>
+        <p>
+          Email:{" "}
+          <a href={`mailto:${personal.email}`}>{personal.email}</a>
+        </p>
         <p>Phone: {personal.phone}</p>
 
         <div className="links">
