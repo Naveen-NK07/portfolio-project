@@ -6,11 +6,15 @@ import "./App.css";
 export default function ReviewPage() {
   const navigate = useNavigate();
 
+  const BASE_URL = "https://portfolio-project-2o22.onrender.com";
+
   const [form, setForm] = useState({ name: "", email: "", message: "", rating: 5 });
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/reviews").then((res) => setReviews(res.data));
+    axios.get(`${BASE_URL}/api/reviews`)
+      .then((res) => setReviews(res.data))
+      .catch(err => console.error("Error loading reviews:", err));
   }, []);
 
   const handleChange = (e) => {
@@ -19,11 +23,19 @@ export default function ReviewPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post("http://localhost:5000/api/review", form);
-    alert("Review submitted!");
-    const res = await axios.get("http://localhost:5000/api/reviews");
-    setReviews(res.data);
-    setForm({ name: "", email: "", message: "", rating: 5 });
+
+    try {
+      await axios.post(`${BASE_URL}/api/review`, form);
+      alert("Review submitted!");
+
+      const res = await axios.get(`${BASE_URL}/api/reviews`);
+      setReviews(res.data);
+
+      setForm({ name: "", email: "", message: "", rating: 5 });
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert("Failed to submit review.");
+    }
   };
 
   return (
@@ -75,7 +87,6 @@ export default function ReviewPage() {
         </div>
       ))}
 
-      {/* Back button with center alignment + gap */}
       <div style={{ textAlign: "center", marginTop: "40px" }}>
         <button onClick={() => navigate("/")}>Back to Profile</button>
       </div>
