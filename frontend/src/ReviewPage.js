@@ -6,16 +6,9 @@ import "./App.css";
 export default function ReviewPage() {
   const navigate = useNavigate();
 
-  // ⭐ USE YOUR RENDER BACKEND URL
   const BASE_URL = "https://portfolio-project-2o22.onrender.com";
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    message: "",
-    rating: 5,
-  });
-
+  const [form, setForm] = useState({ name: "", email: "", message: "", rating: 5 });
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
@@ -31,18 +24,13 @@ export default function ReviewPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      // ⭐ FIXED: correct POST URL
-      await axios.post(`${BASE_URL}/api/reviews`, form);
-
+      await axios.post(`${BASE_URL}/api/review`, form);
       alert("Review submitted!");
 
-      // reload reviews
       const res = await axios.get(`${BASE_URL}/api/reviews`);
       setReviews(res.data);
 
-      // reset form
       setForm({ name: "", email: "", message: "", rating: 5 });
     } catch (err) {
       console.error("Submit error:", err);
@@ -55,24 +43,9 @@ export default function ReviewPage() {
       <h2>Leave a Review</h2>
 
       <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Name"
-          value={form.name}
-          onChange={handleChange}
-        />
-        <input
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-        />
-        <textarea
-          name="message"
-          placeholder="Message"
-          value={form.message}
-          onChange={handleChange}
-        ></textarea>
+        <input name="name" placeholder="Name" value={form.name} onChange={handleChange}/>
+        <input name="email" placeholder="Email" value={form.email} onChange={handleChange}/>
+        <textarea name="message" placeholder="Message" value={form.message} onChange={handleChange}></textarea>
 
         <div>
           Rating:{" "}
