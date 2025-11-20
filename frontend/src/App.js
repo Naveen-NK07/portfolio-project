@@ -1,41 +1,69 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Collapsible from "./Collapsible";
 import ReviewPage from "./ReviewPage";
 import "./App.css";
 
 function Home() {
-  const education = [
-    "Dhanalakshmi College Of Engineering — B.E (CSE) (2021–2025) CGPA: 8.06",
-    "Sri Vishwa Vidyalaya — HSC (2021) 81%",
-    "Sri Vishwa Vidyalaya — SSLC (2019) 76%",
-  ];
+  const [personal, setPersonal] = useState({});
+  const [education, setEducation] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [certificates, setCertificates] = useState([]);
 
-  const skills = ["Java", "Python", "HTML", "CSS", "MySQL"];
-  const certificates = [
-    "AWS Cloud Foundations",
-    "TCS ION Career Edge",
-    "HR Skills Workshop",
-  ];
+  useEffect(() => {
+    // PERSONAL INFO
+    fetch("http://localhost:5000/api/personal-info")
+      .then(res => res.json())
+      .then(data => setPersonal(data));
+
+    // EDUCATION
+    fetch("http://localhost:5000/api/education")
+      .then(res => res.json())
+      .then(data => {
+        const formatted = data.map(e =>
+          `${e.institution} — ${e.degree} (${e.start_year}–${e.end_year}) ${e.grade}`
+        );
+        setEducation(formatted);
+      });
+
+    // SKILLS
+    fetch("http://localhost:5000/api/skills")
+      .then(res => res.json())
+      .then(data => {
+        const formatted = data.map(s => `${s.skill_name} (${s.proficiency})`);
+        setSkills(formatted);
+      });
+
+    // CERTIFICATES
+    fetch("http://localhost:5000/api/certificates")
+      .then(res => res.json())
+      .then(data => {
+        const formatted = data.map(c =>
+          `${c.certificate_name} — ${c.issuer} (${c.issue_year})`
+        );
+        setCertificates(formatted);
+      });
+  }, []);
 
   return (
     <div className="home">
-      {/* ---------- Sidebar ---------- */}
+      {/* Sidebar */}
       <div className="sidebar">
         <img src="/profile.jpg" alt="Profile" className="profile-pic" />
-        <h2>Naveen Kumar P</h2>
-        <p>Aspiring Software Developer</p>
+
+        <h2>{personal.full_name}</h2>
+        <p>{personal.headline}</p>
+        <p>Email:{" "}
+              <a href={`mailto:${personal.email}`}>{personal.email}</a>
+            </p>
+        <p>Phone: {personal.phone}</p>
 
         <div className="links">
-          <a
-            href="https://github.com/Naveen-NK07"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://github.com/Naveen-NK07" target="_blank" rel="noreferrer">
             GitHub
           </a>
           <a
-            href="https://www.linkedin.com/in/naveen-kumar-905aa7265?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+            href="https://www.linkedin.com/in/naveen-kumar-905aa7265"
             target="_blank"
             rel="noreferrer"
           >
@@ -48,18 +76,15 @@ function Home() {
         </a>
       </div>
 
-      {/* ---------- Content Section ---------- */}
+      {/* Content */}
       <div className="content">
         <h1>Welcome!</h1>
-        <p>Passionate about coding and continuous learning.</p>
 
         <Collapsible title="Education" items={education} />
         <Collapsible title="Skills" items={skills} />
         <Collapsible title="Certificates" items={certificates} />
 
-        <Link to="/reviews" className="btn">
-          Go to Reviews
-        </Link>
+        <Link to="/reviews" className="btn">Go to Reviews</Link>
       </div>
     </div>
   );

@@ -1,11 +1,9 @@
-import mysql.connector, os
-from dotenv import load_dotenv
-load_dotenv()
+import sqlite3
+import os
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "database.db")
 
 def get_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASS", ""),
-        database=os.getenv("DB_NAME", "personal_site")
-    )
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
