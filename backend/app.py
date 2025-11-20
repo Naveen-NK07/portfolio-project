@@ -10,7 +10,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# Allow frontend to access backend
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 # ------------------------- PERSONAL INFO -------------------------
@@ -58,15 +60,17 @@ def get_certificates():
 
 
 # ------------------------- ADD REVIEW -------------------------
-@app.route("/api/review", methods=["POST"])
+@app.route("/api/reviews", methods=["POST"])
 def add_review():
     try:
         data = request.get_json()
 
         name = data.get("name", "")
         email = data.get("email", "")
-        rating = data.get("rating", 0)
-        message = data.get("message", data.get("comment", ""))
+        rating = int(data.get("rating", 0))
+
+        # Accept both comment/message
+        message = data.get("comment") or data.get("message") or ""
 
         conn = get_connection()
         cur = conn.cursor()
@@ -86,13 +90,13 @@ def add_review():
         conn.commit()
         conn.close()
 
-        # Email should NOT break review submission
+        # Email should NOT break the API
         try:
             send_email(name, email, rating, message)
         except Exception as e:
-            print("Email error ignored:", e)
+            print("Email sending failed but review saved:", e)
 
-        return jsonify({"success": True})
+        return jsonify({"success": True, "message": "Review added successfully"})
 
     except Exception as e:
         print("Backend Error:", e)
@@ -116,15 +120,15 @@ def send_email(name, email, rating, message):
     PASS = os.getenv("EMAIL_PASS")
 
     if not EMAIL or not PASS:
-        print("❌ Email or password missing — skipping email.")
-        return  # DO NOT break the API
+        print("❌ Missing email credentials — skipping email.")
+        return
 
     msg = EmailMessage()
     msg["Subject"] = f"New Review from {name}"
     msg["From"] = EMAIL
     msg["To"] = EMAIL
     msg.set_content(f"""
-You received a new review:
+New review received:
 
 Name: {name}
 Email: {email}
@@ -148,4 +152,3 @@ def home():
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
-
