@@ -6,15 +6,23 @@ import "./App.css";
 export default function ReviewPage() {
   const navigate = useNavigate();
 
+  // ⭐ USE YOUR RENDER BACKEND URL
   const BASE_URL = "https://portfolio-project-2o22.onrender.com";
 
-  const [form, setForm] = useState({ name: "", email: "", message: "", rating: 5 });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    message: "",
+    rating: 5,
+  });
+
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/api/reviews`)
+    axios
+      .get(`${BASE_URL}/api/reviews`)
       .then((res) => setReviews(res.data))
-      .catch(err => console.error("Error loading reviews:", err));
+      .catch((err) => console.error("Error loading reviews:", err));
   }, []);
 
   const handleChange = (e) => {
@@ -25,12 +33,16 @@ export default function ReviewPage() {
     e.preventDefault();
 
     try {
-      await axios.post(`${BASE_URL}/api/review`, form);
+      // ⭐ FIXED: correct POST URL
+      await axios.post(`${BASE_URL}/api/reviews`, form);
+
       alert("Review submitted!");
 
+      // reload reviews
       const res = await axios.get(`${BASE_URL}/api/reviews`);
       setReviews(res.data);
 
+      // reset form
       setForm({ name: "", email: "", message: "", rating: 5 });
     } catch (err) {
       console.error("Submit error:", err);
