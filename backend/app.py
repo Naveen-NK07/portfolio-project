@@ -6,6 +6,7 @@ from email.message import EmailMessage
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+import ssl
 
 load_dotenv()
 
@@ -26,8 +27,7 @@ def send_email(name, email, rating, message):
     msg["From"] = EMAIL
     msg["To"] = EMAIL
 
-    msg.set_content(
-        f"""
+    msg.set_content(f"""
 New Review Received:
 
 Name: {name}
@@ -36,17 +36,32 @@ Rating: {rating}
 
 Message:
 {message}
-"""
-    )
+""")
 
     try:
+        # --- Try TLS (587) ---
+        print("Trying TLS (587)...")
         with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.ehlo()
             smtp.starttls()
             smtp.login(EMAIL, PASS)
             smtp.send_message(msg)
-        print("📩 Email sent successfully!")
+        print("📩 Email sent successfully using TLS!")
+        return
+
     except Exception as e:
-        print("❌ Email sending failed:", e)
+        print("TLS failed:", e)
+
+    try:
+        # --- Try SSL (465) ---
+        print("Trying SSL (465)...")
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
+            smtp.login(EMAIL, PASS)
+            smtp.send_message(msg)
+        print("📩 Email sent successfully using SSL!")
+    except Exception as e:
+        print("❌ Email sending failed completely:", e)
 
 
 # ---------------- PERSONAL INFO ----------------
@@ -118,14 +133,18 @@ def add_review():
         INSERT INTO reviews (profile_id, name, email, message, rating, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
     """, (
-        1, name, email, message, rating,
+        1,
+        name,
+        email,
+        message,
+        rating,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
     conn.commit()
     conn.close()
 
-    # Send email (won't break API)
+    # Send email but never break API
     try:
         send_email(name, email, rating, message)
     except:
