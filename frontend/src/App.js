@@ -4,6 +4,8 @@ import Collapsible from "./Collapsible";
 import ReviewPage from "./ReviewPage";
 import "./App.css";
 
+const BASE_URL = "https://portfolio-project-2o22.onrender.com";
+
 function Home() {
   const [personal, setPersonal] = useState({});
   const [education, setEducation] = useState([]);
@@ -11,37 +13,39 @@ function Home() {
   const [certificates, setCertificates] = useState([]);
 
   useEffect(() => {
-    const BASE_URL = "https://portfolio-project-2o22.onrender.com";
-
     // PERSONAL INFO
     fetch(`${BASE_URL}/api/personal-info`)
-      .then(res => res.json())
-      .then(data => setPersonal(data));
+      .then((res) => res.json())
+      .then((data) => setPersonal(data));
 
     // EDUCATION
     fetch(`${BASE_URL}/api/education`)
-      .then(res => res.json())
-      .then(data => {
-        const formatted = data.map(e =>
-          `${e.institution} — ${e.degree} (${e.start_year}–${e.end_year}) ${e.grade}`
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map(
+          (e) =>
+            `${e.institution} — ${e.degree} (${e.start_year}–${e.end_year}) ${e.grade}`
         );
         setEducation(formatted);
       });
 
     // SKILLS
     fetch(`${BASE_URL}/api/skills`)
-      .then(res => res.json())
-      .then(data => {
-        const formatted = data.map(s => `${s.skill_name} (${s.proficiency})`);
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map(
+          (s) => `${s.skill_name} (${s.proficiency})`
+        );
         setSkills(formatted);
       });
 
     // CERTIFICATES
     fetch(`${BASE_URL}/api/certificates`)
-      .then(res => res.json())
-      .then(data => {
-        const formatted = data.map(c =>
-          `${c.certificate_name} — ${c.issuer} (${c.issue_year})`
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map(
+          (c) =>
+            `${c.certificate_name} — ${c.issuer} (${c.issue_year})`
         );
         setCertificates(formatted);
       });
@@ -56,13 +60,16 @@ function Home() {
         <h2>{personal.full_name}</h2>
         <p>{personal.headline}</p>
         <p>
-          Email:{" "}
-          <a href={`mailto:${personal.email}`}>{personal.email}</a>
+          Email: <a href={`mailto:${personal.email}`}>{personal.email}</a>
         </p>
         <p>Phone: {personal.phone}</p>
 
         <div className="links">
-          <a href="https://github.com/Naveen-NK07" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/Naveen-NK07"
+            target="_blank"
+            rel="noreferrer"
+          >
             GitHub
           </a>
           <a
@@ -87,7 +94,9 @@ function Home() {
         <Collapsible title="Skills" items={skills} />
         <Collapsible title="Certificates" items={certificates} />
 
-        <Link to="/reviews" className="btn">Go to Reviews</Link>
+        <Link to="/reviews" className="btn">
+          Go to Reviews
+        </Link>
       </div>
     </div>
   );

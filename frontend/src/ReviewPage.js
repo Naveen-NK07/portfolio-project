@@ -8,9 +8,16 @@ export default function ReviewPage() {
 
   const BASE_URL = "https://portfolio-project-2o22.onrender.com";
 
-  const [form, setForm] = useState({ name: "", email: "", message: "", rating: 5 });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    message: "",
+    rating: 5,
+  });
+
   const [reviews, setReviews] = useState([]);
 
+  // Load all reviews
   useEffect(() => {
     axios
       .get(`${BASE_URL}/api/reviews`)
@@ -22,15 +29,25 @@ export default function ReviewPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Submit review
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.name || !form.email || !form.message) {
+      alert("Please fill all fields.");
+      return;
+    }
+
     try {
-      await axios.post(`${BASE_URL}/api/review`, form);
+      await axios.post(`${BASE_URL}/api/reviews`, form);
+
       alert("Review submitted!");
 
+      // Reload reviews list
       const res = await axios.get(`${BASE_URL}/api/reviews`);
       setReviews(res.data);
 
+      // Reset form
       setForm({ name: "", email: "", message: "", rating: 5 });
     } catch (err) {
       console.error("Submit error:", err);
@@ -43,16 +60,33 @@ export default function ReviewPage() {
       <h2>Leave a Review</h2>
 
       <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" value={form.name} onChange={handleChange}/>
-        <input name="email" placeholder="Email" value={form.email} onChange={handleChange}/>
-        <textarea name="message" placeholder="Message" value={form.message} onChange={handleChange}></textarea>
+        <input
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+        />
+
+        <input
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+        />
+
+        <textarea
+          name="message"
+          placeholder="Message"
+          value={form.message}
+          onChange={handleChange}
+        ></textarea>
 
         <div>
           Rating:{" "}
           {[1, 2, 3, 4, 5].map((n) => (
             <span
               key={n}
-              className={form.rating >= n ? "star filled" : "star"}
+              className={n <= form.rating ? "star filled" : "star"}
               onClick={() => setForm({ ...form, rating: n })}
             >
               ★
