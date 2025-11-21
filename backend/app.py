@@ -10,165 +10,106 @@ from datetime import datetime
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 
-# ------------------------------------
-# PERSONAL INFO
-# ------------------------------------
+# ---------------- PERSONAL INFO ----------------
 @app.route("/api/personal-info", methods=["GET"])
 def get_personal_info():
     conn = get_connection()
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor()
 
     cur.execute("SELECT full_name, email, phone, headline FROM personal_info WHERE id = 1")
     row = cur.fetchone()
 
-    cur.close()
     conn.close()
-    return jsonify(row)
 
+    return jsonify(dict(row) if row else {})
 
-# ------------------------------------
-# EDUCATION
-# ------------------------------------
+# ---------------- EDUCATION ----------------
 @app.route("/api/education", methods=["GET"])
 def get_education():
     conn = get_connection()
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor()
 
     cur.execute("SELECT * FROM education WHERE profile_id = 1 ORDER BY start_year DESC")
     rows = cur.fetchall()
 
-    cur.close()
     conn.close()
-    return jsonify(rows)
 
+    return jsonify([dict(r) for r in rows])
 
-# ------------------------------------
-# SKILLS
-# ------------------------------------
+# ---------------- SKILLS ----------------
 @app.route("/api/skills", methods=["GET"])
 def get_skills():
     conn = get_connection()
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor()
 
-    cur.execute("SELECT * FROM skills WHERE profile_id = 1 ORDER BY id ASC")
+    cur.execute("SELECT * FROM skills WHERE profile_id = 1")
     rows = cur.fetchall()
 
-    cur.close()
     conn.close()
-    return jsonify(rows)
 
+    return jsonify([dict(r) for r in rows])
 
-# ------------------------------------
-# CERTIFICATES
-# ------------------------------------
+# ---------------- CERTIFICATES ----------------
 @app.route("/api/certificates", methods=["GET"])
 def get_certificates():
     conn = get_connection()
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor()
 
-    cur.execute("SELECT * FROM certificates WHERE profile_id = 1 ORDER BY id ASC")
+    cur.execute("SELECT * FROM certificates WHERE profile_id = 1")
     rows = cur.fetchall()
 
-    cur.close()
     conn.close()
-    return jsonify(rows)
 
+    return jsonify([dict(r) for r in rows])
 
-# ------------------------------------
-# ADD REVIEW  (UPDATED WITH profile_id + created_at)
-# ------------------------------------
+# ---------------- ADD REVIEW ----------------
 @app.route("/api/reviews", methods=["POST"])
 def add_review():
-    try:
-        data = request.get_json()
+    data = request.get_json()
 
-        name = data.get("name", "")
-        email = data.get("email", "")
-        rating = int(data.get("rating", 0))
-        message = data.get("message") or data.get("comment") or ""
+    name = data.get("name")
+    email = data.get("email")
+    rating = data.get("rating")
+    message = data.get("message")
 
-        conn = get_connection()
-        cur = conn.cursor(dictionary=True)
+    conn = get_connection()
+    cur = conn.cursor()
 
-        cur.execute(
-            """
-            INSERT INTO reviews (profile_id, name, email, message, rating, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (1, name, email, message, rating, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-        )
+    cur.execute("""
+        INSERT INTO reviews (profile_id, name, email, message, rating, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        1,
+        name,
+        email,
+        message,
+        rating,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
 
-        conn.commit()
-        cur.close()
-        conn.close()
+    conn.commit()
+    conn.close()
 
-        # try sending email
-        try:
-            send_email(data)
-        except Exception as e:
-            print("Email error but review saved:", e)
+    return jsonify({"success": True})
 
-        return jsonify({"success": True})
-
-    except Exception as e:
-        print("Backend Error:", e)
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-# ------------------------------------
-# GET REVIEWS
-# ------------------------------------
+# ---------------- GET REVIEWS ----------------
 @app.route("/api/reviews", methods=["GET"])
 def get_reviews():
     conn = get_connection()
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor()
 
     cur.execute("SELECT * FROM reviews WHERE profile_id = 1 ORDER BY id DESC")
     rows = cur.fetchall()
 
-    cur.close()
     conn.close()
-    return jsonify(rows)
 
+    return jsonify([dict(r) for r in rows])
 
-# ------------------------------------
-# EMAIL FUNCTION (unchanged)
-# ------------------------------------
-def send_email(data):
-    try:
-        EMAIL = os.getenv("EMAIL_USER")
-        PASS = os.getenv("EMAIL_PASS")
-        if not EMAIL or not PASS:
-            return
-
-        msg = EmailMessage()
-        msg["Subject"] = f"New Review from {data['name']}"
-        msg["From"] = EMAIL
-        msg["To"] = EMAIL
-        msg.set_content(f"""
-Name: {data['name']}
-Email: {data['email']}
-Rating: {data['rating']}
-
-Message:
-{data['message']}
-""")
-
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(EMAIL, PASS)
-            server.send_message(msg)
-
-    except Exception as e:
-        print("Email error:", e)
-
-
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
-    return "Backend Running!"
-
+    return "Backend Running Successfully!"
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
