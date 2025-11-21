@@ -12,6 +12,43 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# ---------------- EMAIL FUNCTION ----------------
+def send_email(name, email, rating, message):
+    EMAIL = os.getenv("EMAIL_USER")
+    PASS = os.getenv("EMAIL_PASS")
+
+    if not EMAIL or not PASS:
+        print("❌ Email credentials missing")
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = f"New Review from {name}"
+    msg["From"] = EMAIL
+    msg["To"] = EMAIL
+
+    msg.set_content(
+        f"""
+New Review Received:
+
+Name: {name}
+Email: {email}
+Rating: {rating}
+
+Message:
+{message}
+"""
+    )
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL, PASS)
+            smtp.send_message(msg)
+        print("📩 Email sent successfully!")
+    except Exception as e:
+        print("❌ Email sending failed:", e)
+
+
 # ---------------- PERSONAL INFO ----------------
 @app.route("/api/personal-info", methods=["GET"])
 def get_personal_info():
@@ -22,8 +59,8 @@ def get_personal_info():
     row = cur.fetchone()
 
     conn.close()
-
     return jsonify(dict(row) if row else {})
+
 
 # ---------------- EDUCATION ----------------
 @app.route("/api/education", methods=["GET"])
@@ -35,8 +72,8 @@ def get_education():
     rows = cur.fetchall()
 
     conn.close()
-
     return jsonify([dict(r) for r in rows])
+
 
 # ---------------- SKILLS ----------------
 @app.route("/api/skills", methods=["GET"])
@@ -48,8 +85,8 @@ def get_skills():
     rows = cur.fetchall()
 
     conn.close()
-
     return jsonify([dict(r) for r in rows])
+
 
 # ---------------- CERTIFICATES ----------------
 @app.route("/api/certificates", methods=["GET"])
@@ -61,8 +98,8 @@ def get_certificates():
     rows = cur.fetchall()
 
     conn.close()
-
     return jsonify([dict(r) for r in rows])
+
 
 # ---------------- ADD REVIEW ----------------
 @app.route("/api/reviews", methods=["POST"])
@@ -81,18 +118,21 @@ def add_review():
         INSERT INTO reviews (profile_id, name, email, message, rating, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
     """, (
-        1,
-        name,
-        email,
-        message,
-        rating,
+        1, name, email, message, rating,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
     conn.commit()
     conn.close()
 
+    # Send email (won't break API)
+    try:
+        send_email(name, email, rating, message)
+    except:
+        pass
+
     return jsonify({"success": True})
+
 
 # ---------------- GET REVIEWS ----------------
 @app.route("/api/reviews", methods=["GET"])
@@ -104,12 +144,13 @@ def get_reviews():
     rows = cur.fetchall()
 
     conn.close()
-
     return jsonify([dict(r) for r in rows])
+
 
 @app.route("/")
 def home():
     return "Backend Running Successfully!"
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
