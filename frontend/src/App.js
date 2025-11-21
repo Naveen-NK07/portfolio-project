@@ -12,43 +12,56 @@ function Home() {
   const [skills, setSkills] = useState([]);
   const [certificates, setCertificates] = useState([]);
 
+  // ⬇⬇ NEW — Retry function to handle Render cold start
+  async function fetchWithRetry(url, retries = 6) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url);
+        if (response.ok) return await response.json();
+      } catch (error) {
+        console.log(`Retrying: ${url}`);
+      }
+      await new Promise((r) => setTimeout(r, 2000)); // wait 2 seconds
+    }
+    return null;
+  }
+
   useEffect(() => {
-    // PERSONAL INFO
-    fetch(`${BASE_URL}/api/personal-info`)
-      .then((res) => res.json())
-      .then((data) => setPersonal(data));
+    async function loadData() {
+      // PERSONAL INFO
+      const p = await fetchWithRetry(`${BASE_URL}/api/personal-info`);
+      if (p) setPersonal(p);
 
-    // EDUCATION
-    fetch(`${BASE_URL}/api/education`)
-      .then((res) => res.json())
-      .then((data) => {
-        const formatted = data.map(
-          (e) =>
-            `${e.institution} — ${e.degree} (${e.start_year}–${e.end_year}) ${e.grade}`
+      // EDUCATION
+      const edu = await fetchWithRetry(`${BASE_URL}/api/education`);
+      if (edu) {
+        setEducation(
+          edu.map(
+            (e) =>
+              `${e.institution} — ${e.degree} (${e.start_year}–${e.end_year}) ${e.grade}`
+          )
         );
-        setEducation(formatted);
-      });
+      }
 
-    // SKILLS
-    fetch(`${BASE_URL}/api/skills`)
-      .then((res) => res.json())
-      .then((data) => {
-        const formatted = data.map(
-          (s) => `${s.skill_name} (${s.proficiency})`
-        );
-        setSkills(formatted);
-      });
+      // SKILLS
+      const skl = await fetchWithRetry(`${BASE_URL}/api/skills`);
+      if (skl) {
+        setSkills(skl.map((s) => `${s.skill_name} (${s.proficiency})`));
+      }
 
-    // CERTIFICATES
-    fetch(`${BASE_URL}/api/certificates`)
-      .then((res) => res.json())
-      .then((data) => {
-        const formatted = data.map(
-          (c) =>
-            `${c.certificate_name} — ${c.issuer} (${c.issue_year})`
+      // CERTIFICATES
+      const cert = await fetchWithRetry(`${BASE_URL}/api/certificates`);
+      if (cert) {
+        setCertificates(
+          cert.map(
+            (c) =>
+              `${c.certificate_name} — ${c.issuer} (${c.issue_year})`
+          )
         );
-        setCertificates(formatted);
-      });
+      }
+    }
+
+    loadData();
   }, []);
 
   return (
@@ -65,11 +78,7 @@ function Home() {
         <p>Phone: {personal.phone}</p>
 
         <div className="links">
-          <a
-            href="https://github.com/Naveen-NK07"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://github.com/Naveen-NK07" target="_blank" rel="noreferrer">
             GitHub
           </a>
           <a
