@@ -39,7 +39,6 @@ Message:
 """)
 
     try:
-        # --- Try TLS (587) ---
         print("Trying TLS (587)...")
         with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
             smtp.ehlo()
@@ -48,12 +47,10 @@ Message:
             smtp.send_message(msg)
         print("📩 Email sent successfully using TLS!")
         return
-
     except Exception as e:
         print("TLS failed:", e)
 
     try:
-        # --- Try SSL (465) ---
         print("Trying SSL (465)...")
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
@@ -144,7 +141,6 @@ def add_review():
     conn.commit()
     conn.close()
 
-    # Send email but never break API
     try:
         send_email(name, email, rating, message)
     except:
@@ -171,5 +167,7 @@ def home():
     return "Backend Running Successfully!"
 
 
+# ------------------- DEPLOYMENT FIX (COMPULSORY) -------------------
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Koyeb provides this
+    app.run(host="0.0.0.0", port=port)         # Required for Koyeb
